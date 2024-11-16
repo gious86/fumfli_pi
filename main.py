@@ -15,8 +15,6 @@ import array
 from random import randint
 import urequests
 
-wdt = machine.WDT(timeout=8388)
-wdt.feed()
 
 led = machine.Pin("LED", machine.Pin.OUT)
 
@@ -177,7 +175,10 @@ async def heart_beat():
     
     c = 0
     while True:
-        wdt.feed()
+        try:
+            wdt.feed()
+        except:
+            print('no wdt')
         gc.collect()
         if connected:
             if time.ticks_diff(time.ticks_ms(), server_last_seen) > 10000:
@@ -236,6 +237,7 @@ async def main_loop():
     global ws
     global server_last_seen
     global connected
+    global wdt
     
     wifi = await wifi_connect(aps)
     mac = ubinascii.hexlify(wifi.config('mac')).decode().upper()
@@ -244,6 +246,9 @@ async def main_loop():
     print('checking ota update...')
     ota_update(config['ota_server_address'], config['model'], ota_files)
     
+    wdt = machine.WDT(timeout=8388)
+    wdt.feed()
+
     wdt.feed()
     print("Local time before synchronization：%s" %str(time.localtime()))
     try:    
